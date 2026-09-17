@@ -48,6 +48,22 @@ const PIZZAS = [
 
 const CALZONE_PRICE = 50000;
 
+/* ================= PROMO MARTES A JUEVES ================= */
+const PROMO_DAYS = [2,3,4]; // martes, miércoles, jueves
+const PROMO_MOZZARELLA_PRICE = 30000;
+
+function isPromoActive(){
+  const day = new Date().getDay();
+  return PROMO_DAYS.includes(day);
+}
+
+function effectivePizzaPrice(pizza){
+  if (pizza.id === "mozzarella" && isPromoActive()){
+    return { price: PROMO_MOZZARELLA_PRICE, original: pizza.price };
+  }
+  return { price: pizza.price, original: null };
+}
+
 const PAPAS = [
   { id:"chico", label:"Chico", price:12000 },
   { id:"grande", label:"Grande", price:20000 },
@@ -106,11 +122,15 @@ function renderNav(){
 }
 
 function pizzaCardHTML(p){
+  const eff = effectivePizzaPrice(p);
+  const priceHTML = eff.original
+    ? `<span class="price-strike">${money(eff.original)}</span>${money(eff.price)}<span class="promo-tag">Oferta</span>`
+    : `${money(eff.price)}`;
   return `
   <div class="item-card" data-search="${p.name.toLowerCase()} ${p.desc.toLowerCase()}">
     <div class="item-top">
       <p class="item-name">${p.name}</p>
-      <span class="item-price-single">${money(p.price)}</span>
+      <span class="item-price-single" data-price="${eff.price}">${priceHTML}</span>
     </div>
     <p class="item-desc">${p.desc}</p>
     <button class="note-toggle" data-action="toggle-note">+ Agregar nota</button>
@@ -304,7 +324,7 @@ function wireCardEvents(){
       } else {
         // pizza
         const name = card.querySelector('.item-name').textContent;
-        const price = Number(card.querySelector('.item-price-single').textContent.replace(/[^\d]/g,''));
+        const price = Number(card.querySelector('.item-price-single').dataset.price);
         line = {
           key: "pizza-"+name,
           name,
@@ -446,6 +466,7 @@ let orderType = "delivery";
 const orderTypeToggle = document.getElementById('orderTypeToggle');
 const addressField = document.getElementById('addressField');
 const tableField = document.getElementById('tableField');
+const vehicleField = document.getElementById('vehicleField');
 
 orderTypeToggle.querySelectorAll('button').forEach(btn=>{
   btn.addEventListener('click', ()=>{
@@ -454,6 +475,11 @@ orderTypeToggle.querySelectorAll('button').forEach(btn=>{
     orderType = btn.dataset.type;
     addressField.style.display = orderType === 'delivery' ? '' : 'none';
     tableField.style.display = orderType === 'local' ? '' : 'none';
+    vehicleField.style.display = orderType === 'autopizza' ? '' : 'none';
+    const deliveryPromoHint = document.getElementById('deliveryPromoHint');
+    if (deliveryPromoHint){
+      deliveryPromoHint.style.display = (orderType === 'delivery' && isPromoActive()) ? '' : 'none';
+    }
     updateWaButtonState();
   });
 });
@@ -508,7 +534,7 @@ waBtn.addEventListener('click', ()=>{
   const table = document.getElementById('custTable').value.trim();
   const notes = document.getElementById('custNotes').value.trim();
 
-  const orderTypeLabel = { delivery:"Delivery", retiro:"Retiro / Para llevar", local:"Comer en el local" }[orderType];
+  const orderTypeLabel = { delivery:"Delivery", autopizza:"Auto-pizza (retiro en ventanilla)", retiro:"Retiro / Para llevar", local:"Comer en el local" }[orderType];
 
   let msg = `¡Hola ${BUSINESS_NAME}! 🇮🇹 Quiero hacer este pedido:\n\n`;
   cart.forEach(line=>{
@@ -522,6 +548,11 @@ waBtn.addEventListener('click', ()=>{
   if (orderType === 'delivery'){
     if (address) msg += `Dirección: ${address}\n`;
     if (sharedLocationLink) msg += `Ubicación: ${sharedLocationLink}\n`;
+    if (isPromoActive()) msg += `(Promo delivery gratis en pizzas, válida martes a jueves)\n`;
+  }
+  if (orderType === 'autopizza'){
+    const vehicle = document.getElementById('custVehicle').value.trim();
+    if (vehicle) msg += `Vehículo: ${vehicle}\n`;
   }
   if (orderType === 'local' && table){
     msg += `Mesa / personas: ${table}\n`;

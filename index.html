@@ -33,6 +33,14 @@
   <div class="hours-wrap">
     <span class="hours-status" id="hoursStatus"></span>
   </div>
+
+  <div class="autopizza-banner">
+    <span>🚗 Auto-pizza: pasá por la ventanilla y retirá tu pedido en menos de 5 minutos</span>
+  </div>
+
+  <div class="promo-banner">
+    <span>🔥 Martes a jueves: Mozzarella a ₲30.000 + delivery gratis en todas las pizzas</span>
+  </div>
 </header>
 
 <div class="sticky-topbar">
@@ -41,6 +49,15 @@
   </div>
   <nav class="cats" id="catNav"></nav>
 </div>
+
+<section class="about-section">
+  <img src="about.jpg" alt="Mesa con pizzas de Casa Nostra y horno a leña" class="about-img">
+  <div class="about-text">
+    <h2 class="about-heading">Sobre nosotros</h2>
+    <p>En Casa Nostra cocinamos cada pizza en nuestro horno a leña, a la vieja usanza: masa fermentada, ingredientes frescos y ese toque ahumado que solo da la piedra caliente.</p>
+    <p>Armamos un espacio con terraza al aire libre, luces cálidas y mesas de madera para compartir en familia o con amigos — ya sea que te quedes a comer, pidas para llevar o pases por la ventanilla de Auto-pizza.</p>
+  </div>
+</section>
 
 <main id="mainContent"></main>
 
@@ -63,6 +80,7 @@
         <label>Tipo de pedido</label>
         <div class="toggle-group" id="orderTypeToggle">
           <button data-type="delivery" class="active">Delivery</button>
+          <button data-type="autopizza">Auto-pizza 🚗</button>
           <button data-type="retiro">Retiro / Para llevar</button>
           <button data-type="local">Comer en el local</button>
         </div>
@@ -76,6 +94,12 @@
         <input type="text" id="custAddress" placeholder="Calle, número, referencia">
         <button type="button" class="location-btn" id="locationBtn">📍 Compartir mi ubicación (opcional)</button>
         <p class="location-status" id="locationStatus"></p>
+        <p class="autopizza-hint" id="deliveryPromoHint" style="display:none;">🔥 Delivery gratis en todas las pizzas (promo martes a jueves).</p>
+      </div>
+      <div id="vehicleField" style="display:none;">
+        <label>Vehículo (color y modelo, para identificarte en la ventanilla)</label>
+        <input type="text" id="custVehicle" placeholder="Ej: auto blanco, moto roja...">
+        <p class="autopizza-hint">🚗 Tu pizza estará lista en menos de 5 minutos. Pasá por la ventanilla de Auto-pizza a retirarla.</p>
       </div>
       <div id="tableField" style="display:none;">
         <label>Mesa / cantidad de personas (opcional)</label>
