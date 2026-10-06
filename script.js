@@ -22,7 +22,7 @@ function renderHoursStatus(){
 
 /* ================= CARTA ================= */
 const PIZZAS = [
-  { id:"mozzarella", name:"Mozzarella", desc:"Salsa de tomate, mozzarella, orégano, aceituna.", price:35000 },
+  { id:"mozzarella", name:"Mozzarella", desc:"Salsa de tomate, mozzarella, orégano, aceituna.", price:35000, img:"mozzarella.jpg" },
   { id:"marinara", name:"Marinara", desc:"Salsa de tomate, anchoas, orégano, ajo.", price:55000 },
   { id:"putanessca", name:"Putanessca", desc:"Salsa de tomate, mozzarella, alcaparras, anchoas, ajo, aceituna, albahaca.", price:65000 },
   { id:"oreganatto", name:"Oreganatto", desc:"Salsa de tomate, mozzarella, rodajas de tomate, ajo, aceituna, orégano.", price:50000 },
@@ -39,9 +39,9 @@ const PIZZAS = [
   { id:"cheddar", name:"Cheddar", desc:"Salsa de tomate, mozzarella, cheddar, aceituna.", price:50000 },
   { id:"pollocatupiry", name:"Pollo Catupiry", desc:"Salsa de tomate, mozzarella, pollo, catupiry, aceituna.", price:60000 },
   { id:"bacon", name:"Bacón", desc:"Salsa de tomate, mozzarella, panceta, aceituna.", price:55000 },
-  { id:"rockefeller", name:"Rockefeller", desc:"Salsa de tomate, mozzarella, panceta, cebolla, aceituna.", price:55000 },
+  { id:"rockefeller", name:"Rockefeller", desc:"Salsa de tomate, mozzarella, panceta, cebolla, aceituna.", price:55000, img:"rockefeller.jpg" },
   { id:"palmito", name:"Palmito", desc:"Salsa de tomate, mozzarella, palmito, aceituna.", price:50000 },
-  { id:"pepperoni", name:"Pepperoni", desc:"Salsa de tomate, mozzarella, pepperoni, aceituna.", price:50000 },
+  { id:"pepperoni", name:"Pepperoni", desc:"Salsa de tomate, mozzarella, pepperoni, aceituna.", price:50000, img:"pepperoni.jpg" },
   { id:"morronesrojos", name:"Morrones Rojos", desc:"Salsa de tomate, mozzarella, morrones, albahaca, aceituna.", price:50000 },
   { id:"vegetariana", name:"Vegetariana", desc:"Salsa de tomate, mozzarella, cebolla morada, albahaca, locote verde, tomate, aceituna.", price:55000 },
 ];
@@ -126,8 +126,10 @@ function pizzaCardHTML(p){
   const priceHTML = eff.original
     ? `<span class="price-strike">${money(eff.original)}</span>${money(eff.price)}<span class="promo-tag">Oferta</span>`
     : `${money(eff.price)}`;
+  const imgHTML = p.img ? `<img class="item-img" src="${p.img}" alt="${p.name}">` : '';
   return `
   <div class="item-card" data-search="${p.name.toLowerCase()} ${p.desc.toLowerCase()}">
+    ${imgHTML}
     <div class="item-top">
       <p class="item-name">${p.name}</p>
       <span class="item-price-single" data-price="${eff.price}">${priceHTML}</span>
