@@ -69,10 +69,20 @@ const PAPAS = [
   { id:"grande", label:"Grande", price:20000 },
 ];
 
+const BEBIDAS = [
+  { id:"coca500", label:"Coca Cola 500 ml", price:10000 },
+  { id:"coca1l", label:"Coca Cola 1 Litro", price:13000 },
+  { id:"coca15l", label:"Coca Cola 1.5 Litros", price:18000 },
+];
+
+const PIZZA_CORRIDA_PRICE = 50000;
+
 const CATEGORIES = [
   { id:"pizzas", label:"Pizzas" },
+  { id:"corrida", label:"Pizza Corrida" },
   { id:"calzones", label:"Calzones" },
   { id:"papas", label:"Papas fritas" },
+  { id:"bebidas", label:"Bebidas" },
 ];
 
 /* ================= ESTADO DEL CARRITO ================= */
@@ -198,6 +208,50 @@ function calzoneCardHTML(){
   </div>`;
 }
 
+function bebidaCardHTML(){
+  const variantsHTML = BEBIDAS.map(v=>
+    `<button class="variant-pill" data-price="${v.price}" data-label="${v.label}">${v.label}<small>${money(v.price)}</small></button>`
+  ).join('');
+  return `
+  <div class="item-card" data-search="coca cola bebida gaseosa">
+    <div class="item-top">
+      <p class="item-name">Coca Cola</p>
+    </div>
+    <p class="item-desc">Elegí el tamaño.</p>
+    <div class="variant-grid" data-role="variants">${variantsHTML}</div>
+    <div class="item-actions">
+      <div class="qty-stepper">
+        <button data-action="dec">-</button>
+        <span data-role="qty">1</span>
+        <button data-action="inc">+</button>
+      </div>
+      <button class="add-btn" data-action="add" disabled>Elegí un tamaño</button>
+    </div>
+  </div>`;
+}
+
+function pizzaCorridaCardHTML(){
+  return `
+  <div class="item-card" data-search="pizza corrida libre por persona" data-per-person="true">
+    <div class="item-top">
+      <p class="item-name">Pizza Corrida</p>
+      <span class="item-price-single" data-price="${PIZZA_CORRIDA_PRICE}">${money(PIZZA_CORRIDA_PRICE)}<span class="per-person"> / persona</span></span>
+    </div>
+    <p class="item-desc">Pizza libre para compartir en la mesa: vamos sirviendo distintos sabores hasta que estés satisfecho. Ideal para grupos.</p>
+    <p class="flavor-note">Indicá la cantidad de personas</p>
+    <button class="note-toggle" data-action="toggle-note">+ Agregar nota</button>
+    <textarea class="note-input" placeholder="Ej: sin anchoas, alguna alergia..."></textarea>
+    <div class="item-actions">
+      <div class="qty-stepper">
+        <button data-action="dec">-</button>
+        <span data-role="qty">1</span>
+        <button data-action="inc">+</button>
+      </div>
+      <button class="add-btn" data-action="add">Agregar</button>
+    </div>
+  </div>`;
+}
+
 function renderSections(){
   const main = document.getElementById('mainContent');
   main.innerHTML = `
@@ -205,6 +259,11 @@ function renderSections(){
       <h2 class="cat-heading">Pizzas</h2>
       <p class="cat-note">Sabores clásicos de la casa.</p>
       ${PIZZAS.map(pizzaCardHTML).join('')}
+    </section>
+    <section class="category" id="cat-corrida">
+      <h2 class="cat-heading">Pizza Corrida</h2>
+      <p class="cat-note">Pizza libre, precio por persona.</p>
+      ${pizzaCorridaCardHTML()}
     </section>
     <section class="category" id="cat-calzones">
       <h2 class="cat-heading">Calzones</h2>
@@ -215,6 +274,11 @@ function renderSections(){
       <h2 class="cat-heading">Papas fritas</h2>
       <p class="cat-note">Chico o grande, como más te guste.</p>
       ${papaCardHTML()}
+    </section>
+    <section class="category" id="cat-bebidas">
+      <h2 class="cat-heading">Bebidas</h2>
+      <p class="cat-note">Para acompañar tu pedido.</p>
+      ${bebidaCardHTML()}
     </section>
   `;
   wireCardEvents();
@@ -303,10 +367,11 @@ function wireCardEvents(){
       let line;
 
       if (variantWrap){
-        // papas fritas
+        // papas fritas / bebidas (cualquier item con tamaños)
+        const itemName = card.querySelector('.item-name').textContent;
         line = {
-          key: "papas-"+selectedVariant.label,
-          name: "Papas fritas",
+          key: itemName+"-"+selectedVariant.label,
+          name: itemName,
           variant: selectedVariant.label,
           note,
           price: selectedVariant.price,
@@ -324,13 +389,14 @@ function wireCardEvents(){
           qty
         };
       } else {
-        // pizza
+        // pizza (o pizza corrida, si trae data-per-person)
         const name = card.querySelector('.item-name').textContent;
         const price = Number(card.querySelector('.item-price-single').dataset.price);
+        const isPerPerson = card.dataset.perPerson === "true";
         line = {
           key: "pizza-"+name,
           name,
-          variant: "",
+          variant: isPerPerson ? `${qty} ${qty===1?'persona':'personas'}` : "",
           note,
           price,
           qty

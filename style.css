@@ -294,6 +294,11 @@ section.category.active{ display:block; animation:fadeIn .25s ease; }
   font-size:12px;
   margin-right:4px;
 }
+.per-person{
+  font-size:10px;
+  font-weight:500;
+  color:var(--tan-soft);
+}
 .promo-tag{
   display:inline-block;
   background:var(--tan);
