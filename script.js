@@ -188,6 +188,7 @@ function calzoneCardHTML(){
   ).join('');
   return `
   <div class="item-card" data-search="calzon calzones">
+    <img class="item-img" src="calzone.jpg" alt="Calzone al horno a leña">
     <div class="item-top">
       <p class="item-name">Calzone</p>
       <span class="item-price-single">${money(CALZONE_PRICE)}</span>
