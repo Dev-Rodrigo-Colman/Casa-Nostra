@@ -26,7 +26,7 @@ const STORAGE_KEY_LAST_ORDER = "casa_nostra_last_order_v2";
    2. DATOS DE LA CARTA COMPLETA
    ========================================================================== */
 const PIZZAS = [
-  { id: "mozzarella", name: "Mozzarella", desc: "Salsa de tomate, mozzarella, orégano, aceituna.", price: 35000, img: "mozzarella.jpg", badge: "Más pedida" },
+  { id: "mozzarella", name: "Mozzarella", desc: "Salsa de tomate, mozzarella, orégano, aceituna.", price: 35000, img: "mozzarella.webp", badge: "Más pedida" },
   { id: "marinara", name: "Marinara", desc: "Salsa de tomate, anchoas, orégano, ajo.", price: 55000 },
   { id: "putanessca", name: "Putanessca", desc: "Salsa de tomate, mozzarella, alcaparras, anchoas, ajo, aceituna, albahaca.", price: 65000 },
   { id: "oreganatto", name: "Oreganatto", desc: "Salsa de tomate, mozzarella, rodajas de tomate, ajo, aceituna, orégano.", price: 50000 },
@@ -43,9 +43,9 @@ const PIZZAS = [
   { id: "cheddar", name: "Cheddar", desc: "Salsa de tomate, mozzarella, cheddar, aceituna.", price: 50000 },
   { id: "pollocatupiry", name: "Pollo Catupiry", desc: "Salsa de tomate, mozzarella, pollo, catupiry, aceituna.", price: 60000 },
   { id: "bacon", name: "Bacón", desc: "Salsa de tomate, mozzarella, panceta, aceituna.", price: 55000 },
-  { id: "rockefeller", name: "Rockefeller", desc: "Salsa de tomate, mozzarella, panceta, cebolla, aceituna.", price: 55000, img: "rockefeller.jpg", badge: "De la casa" },
+  { id: "rockefeller", name: "Rockefeller", desc: "Salsa de tomate, mozzarella, panceta, cebolla, aceituna.", price: 55000, img: "rockefeller.webp", badge: "De la casa" },
   { id: "palmito", name: "Palmito", desc: "Salsa de tomate, mozzarella, palmito, aceituna.", price: 50000 },
-  { id: "pepperoni", name: "Pepperoni", desc: "Salsa de tomate, mozzarella, pepperoni, aceituna.", price: 50000, img: "pepperoni.jpg", badge: "Más pedida" },
+  { id: "pepperoni", name: "Pepperoni", desc: "Salsa de tomate, mozzarella, pepperoni, aceituna.", price: 50000, img: "pepperoni.webp", badge: "Más pedida" },
   { id: "morronesrojos", name: "Morrones Rojos", desc: "Salsa de tomate, mozzarella, morrones, albahaca, aceituna.", price: 50000 },
   { id: "vegetariana", name: "Vegetariana", desc: "Salsa de tomate, mozzarella, cebolla morada, albahaca, locote verde, tomate, aceituna.", price: 55000 }
 ];
@@ -106,6 +106,39 @@ function effectivePizzaPrice(pizza) {
 
 function money(n) {
   return "₲ " + Math.round(n).toLocaleString("es-PY");
+}
+
+// Escapa texto del cliente antes de insertarlo con innerHTML
+function esc(str) {
+  return String(str ?? "").replace(/[&<>"']/g, ch => (
+    { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[ch]
+  ));
+}
+
+// ¿La línea es Pizza Corrida (precio por persona)?
+function isPerPerson(line) {
+  return line.perPerson === true || line.name === "Pizza Corrida";
+}
+
+// ¿La línea es una pizza común de la carta? (excluye Pizza Corrida)
+function isRegularPizza(line) {
+  return !isPerPerson(line) && typeof line.key === "string" && line.key.startsWith("pizza-");
+}
+
+// Precio unitario VIGENTE: las pizzas se recalculan desde la carta
+// para que la promo del día no quede "pegada" en un carrito guardado.
+function linePrice(line) {
+  if (isRegularPizza(line)) {
+    const pizza = PIZZAS.find(p => p.name === line.name);
+    if (pizza) return effectivePizzaPrice(pizza).price;
+  }
+  return line.price;
+}
+
+// Texto de variante según la línea (Pizza Corrida se calcula desde la cantidad)
+function lineVariant(line) {
+  if (isPerPerson(line)) return `${line.qty} ${line.qty === 1 ? "persona" : "personas"}`;
+  return line.variant || "";
 }
 
 /* ==========================================================================
@@ -170,7 +203,7 @@ function cartCount() {
 }
 
 function cartTotal() {
-  return cart.reduce((sum, item) => sum + (item.price * item.qty), 0);
+  return cart.reduce((sum, item) => sum + (linePrice(item) * item.qty), 0);
 }
 
 function addToCart(line) {
@@ -284,7 +317,7 @@ function calzoneCardHTML() {
   return `
   <article class="item-card" data-search="calzon calzones">
     <div class="item-media-wrap">
-      <img class="item-img" src="calzone.jpg" alt="Calzone artesanal cocinado en horno a leña" loading="lazy" decoding="async">
+      <img class="item-img" src="calzone.webp" alt="Calzone artesanal cocinado en horno a leña" loading="lazy" decoding="async">
     </div>
     <div class="item-top">
       <h3 class="item-name">Calzone Artesanal</h3>
@@ -369,6 +402,8 @@ function bebidaCardHTML() {
 /* ==========================================================================
    6. RENDERIZADO DE SECCIONES Y SCROLL SPY FLUIDO
    ========================================================================== */
+let navScrollLock = false; // evita parpadeo del scroll-spy durante el scroll suave
+
 function renderNav() {
   const nav = document.getElementById("catNav");
   if (!nav) return;
@@ -385,8 +420,10 @@ function renderNav() {
       const targetSection = document.getElementById(targetId);
       if (targetSection) {
         // Scroll suave con offset
-        targetSection.scrollIntoView({ behavior: "smooth", block: "start" });
+        navScrollLock = true;
         setActiveCategory(btn.dataset.cat);
+        targetSection.scrollIntoView({ behavior: "smooth", block: "start" });
+        setTimeout(() => { navScrollLock = false; }, 900);
       }
     });
   });
@@ -456,7 +493,7 @@ function setupScrollSpy() {
 
   const observer = new IntersectionObserver((entries) => {
     entries.forEach(entry => {
-      if (entry.isIntersecting) {
+      if (entry.isIntersecting && !navScrollLock) {
         const catId = entry.target.id.replace("cat-", "");
         setActiveCategory(catId);
       }
@@ -598,11 +635,12 @@ function wireCardEvents() {
         } else {
           const name = card.querySelector(".item-name").textContent;
           const price = Number(card.querySelector(".item-price-single").dataset.price);
-          const isPerPerson = card.dataset.perPerson === "true";
+          const perPersonCard = card.dataset.perPerson === "true";
           line = {
             key: "pizza-" + name,
             name,
-            variant: isPerPerson ? `${qty} ${qty === 1 ? 'persona' : 'personas'}` : "",
+            variant: "",
+            perPerson: perPersonCard,
             note,
             price,
             qty
@@ -718,6 +756,7 @@ function openDrawer() {
   drawer.setAttribute("aria-hidden", "false");
   overlay.setAttribute("aria-hidden", "false");
   if (cartFab) cartFab.setAttribute("aria-expanded", "true");
+  if ("inert" in drawer) drawer.inert = false;
 
   checkLastOrderUI();
   renderCartDrawer();
@@ -732,6 +771,7 @@ function closeDrawer() {
   drawer.classList.remove("show");
   drawer.setAttribute("aria-hidden", "true");
   overlay.setAttribute("aria-hidden", "true");
+  if ("inert" in drawer) drawer.inert = true;
   if (cartFab) {
     cartFab.setAttribute("aria-expanded", "false");
     cartFab.focus();
@@ -744,8 +784,29 @@ if (overlay) overlay.addEventListener("click", closeDrawer);
 
 // Cerrar con tecla Escape (Accesibilidad WCAG)
 window.addEventListener("keydown", (e) => {
-  if (e.key === "Escape" && drawer && drawer.classList.contains("show")) {
+  if (!drawer || !drawer.classList.contains("show")) return;
+
+  if (e.key === "Escape") {
     closeDrawer();
+    return;
+  }
+
+  // Focus trap: Tab no sale del carrito mientras está abierto
+  if (e.key === "Tab") {
+    const focusables = drawer.querySelectorAll(
+      'button:not([disabled]), input, textarea, [href], [tabindex]:not([tabindex="-1"])'
+    );
+    const visible = Array.from(focusables).filter(el => el.offsetParent !== null);
+    if (!visible.length) return;
+    const first = visible[0];
+    const last = visible[visible.length - 1];
+    if (e.shiftKey && document.activeElement === first) {
+      e.preventDefault();
+      last.focus();
+    } else if (!e.shiftKey && document.activeElement === last) {
+      e.preventDefault();
+      first.focus();
+    }
   }
 });
 
@@ -755,7 +816,8 @@ function checkLastOrderUI() {
     if (last && Array.isArray(last.items) && last.items.length > 0) {
       repeatOrderWrap.style.display = "flex";
       const summaryText = last.items.map(it => `${it.qty}x ${it.name}`).join(", ");
-      repeatOrderInfo.textContent = `Último pedido: ${summaryText} (${money(last.total)})`;
+      const lastTotal = last.items.reduce((sum, it) => sum + linePrice(it) * it.qty, 0);
+      repeatOrderInfo.textContent = `Último pedido: ${summaryText} (${money(lastTotal)})`;
     } else {
       repeatOrderWrap.style.display = "none";
     }
@@ -798,18 +860,18 @@ function renderCartDrawer() {
     linesWrap.innerHTML = cart.map((line, idx) => `
       <div class="cart-line">
         <div class="cart-line-info">
-          <div class="cart-line-name">${line.name}</div>
-          ${line.variant ? `<div class="cart-line-variant">${line.variant}</div>` : ''}
-          ${line.note ? `<div class="cart-line-note">"${line.note}"</div>` : ''}
+          <div class="cart-line-name">${esc(line.name)}</div>
+          ${lineVariant(line) ? `<div class="cart-line-variant">${esc(lineVariant(line))}</div>` : ''}
+          ${line.note ? `<div class="cart-line-note">"${esc(line.note)}"</div>` : ''}
         </div>
         <div class="cart-line-right">
-          <span class="cart-line-price">${money(line.price * line.qty)}</span>
-          <div class="mini-stepper" role="group" aria-label="Cantidad para ${line.name}">
+          <span class="cart-line-price">${money(linePrice(line) * line.qty)}</span>
+          <div class="mini-stepper" role="group" aria-label="Cantidad para ${esc(line.name)}">
             <button type="button" data-idx="${idx}" data-action="line-dec" aria-label="Restar una unidad">-</button>
             <span>${line.qty}</span>
             <button type="button" data-idx="${idx}" data-action="line-inc" aria-label="Sumar una unidad">+</button>
           </div>
-          <button type="button" class="remove-line" data-idx="${idx}" data-action="line-remove" aria-label="Eliminar ${line.name} del pedido">Quitar</button>
+          <button type="button" class="remove-line" data-idx="${idx}" data-action="line-remove" aria-label="Eliminar ${esc(line.name)} del pedido">Quitar</button>
         </div>
       </div>
     `).join('');
@@ -1006,10 +1068,14 @@ function buildWhatsAppMessage() {
 
   msg += `📋 *DETALLE DEL PEDIDO:*\n`;
   cart.forEach(item => {
-    const itemSubtotal = money(item.price * item.qty);
-    msg += `• *${item.qty}x ${item.name}*`;
-    if (item.variant) {
-      msg += ` (${item.variant})`;
+    const itemSubtotal = money(linePrice(item) * item.qty);
+    if (isPerPerson(item)) {
+      msg += `• *Pizza Corrida* (${lineVariant(item)})`;
+    } else {
+      msg += `• *${item.qty}x ${item.name}*`;
+      if (item.variant) {
+        msg += ` (${item.variant})`;
+      }
     }
     msg += ` — ${itemSubtotal}\n`;
     if (item.note) {
@@ -1019,7 +1085,7 @@ function buildWhatsAppMessage() {
 
   msg += `\n━━━━━━━━━━━━━━━━━━━━━\n`;
   msg += `💰 *TOTAL A PAGAR:* *${money(cartTotal())}*\n`;
-  if (orderType === "delivery" && isPromoActive()) {
+  if (orderType === "delivery" && isPromoActive() && cart.some(isRegularPizza)) {
     msg += `🔥 _Promo aplicada: Delivery gratis en pizzas (Martes a Jueves)_\n`;
   }
   msg += `━━━━━━━━━━━━━━━━━━━━━\n\n`;
@@ -1079,6 +1145,7 @@ if (waBtn) {
    13. INICIALIZACIÓN
    ========================================================================== */
 function initApp() {
+  if (drawer && "inert" in drawer) drawer.inert = true; // cerrado: fuera del orden de Tab
   renderHoursStatus();
   setInterval(renderHoursStatus, 60000);
 
