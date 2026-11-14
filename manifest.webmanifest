@@ -1,0 +1,30 @@
+{
+  "name": "Casa Nostra Pizzería",
+  "short_name": "Casa Nostra",
+  "description": "Pizzas artesanales al horno a leña y calzones en Ypacaraí. Pedidos online rápidos por WhatsApp.",
+  "lang": "es",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "background_color": "#14151D",
+  "theme_color": "#14151D",
+  "orientation": "portrait",
+  "icons": [
+    {
+      "src": "icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    },
+    {
+      "src": "icon-maskable-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
+    }
+  ]
+}

@@ -1145,6 +1145,7 @@ if (waBtn) {
    13. INICIALIZACIÓN
    ========================================================================== */
 function initApp() {
+  initSplashScreen();
   if (drawer && "inert" in drawer) drawer.inert = true; // cerrado: fuera del orden de Tab
   renderHoursStatus();
   setInterval(renderHoursStatus, 60000);
@@ -1155,6 +1156,7 @@ function initApp() {
   renderCartBadge();
   renderCartDrawer();
   checkLastOrderUI();
+  initPWA();
 }
 
 // Ejecutar al cargar el DOM
@@ -1162,4 +1164,167 @@ if (document.readyState === "loading") {
   document.addEventListener("DOMContentLoaded", initApp);
 } else {
   initApp();
+}
+
+/* ==========================================================================
+   14. PANTALLA DE BIENVENIDA (SPLASH SCREEN)
+   ========================================================================== */
+function initSplashScreen() {
+  const splash = document.getElementById("splashScreen");
+  if (!splash) return;
+
+  let seen = false;
+  try {
+    seen = sessionStorage.getItem("cn_splash_seen") === "true";
+  } catch (e) {
+    seen = false;
+  }
+
+  // Si ya fue visto en esta sesión o trae la clase preventiva, remover de inmediato
+  if (seen || document.documentElement.classList.contains("no-splash")) {
+    splash.remove();
+    return;
+  }
+
+  // Marcar como visto en sessionStorage
+  function markSeen() {
+    try {
+      sessionStorage.setItem("cn_splash_seen", "true");
+    } catch (e) {}
+  }
+
+  // Cierre interactivo rápido al tocar cualquier parte de la pantalla
+  function dismissEarly() {
+    markSeen();
+    splash.classList.add("splash-dismissed");
+    setTimeout(() => {
+      if (splash && splash.parentNode) splash.remove();
+    }, 220);
+  }
+
+  splash.addEventListener("click", dismissEarly, { once: true });
+  splash.addEventListener("touchstart", dismissEarly, { passive: true, once: true });
+
+  // Cierre automático al finalizar la animación
+  setTimeout(() => {
+    markSeen();
+    if (splash && splash.parentNode && !splash.classList.contains("splash-dismissed")) {
+      splash.remove();
+    }
+  }, 1450);
+}
+
+/* ==========================================================================
+   15. PWA: SERVICE WORKER E INSTALACIÓN (ANDROID & IOS)
+   ========================================================================== */
+let deferredInstallPrompt = null;
+
+function initPWA() {
+  // 1. Registro del Service Worker con ruta relativa ./sw.js
+  if ("serviceWorker" in navigator) {
+    window.addEventListener("load", () => {
+      try {
+        navigator.serviceWorker
+          .register("./sw.js", { scope: "./" })
+          .catch((err) => {
+            console.warn("No se pudo registrar el Service Worker:", err);
+          });
+      } catch (err) {
+        console.warn("Error al intentar registrar el Service Worker:", err);
+      }
+    });
+  }
+
+  // 2. Comprobar si ya se ejecuta como PWA instalada (Standalone)
+  const isStandalone =
+    window.matchMedia("(display-mode: standalone)").matches ||
+    window.navigator.standalone === true;
+
+  if (isStandalone) {
+    // Ya está instalada: no mostrar botón
+    return;
+  }
+
+  const installWrap = document.getElementById("installAppWrap");
+  const installBtn = document.getElementById("installAppBtn");
+  if (!installWrap || !installBtn) return;
+
+  // 3. Android / Chrome: Capturar evento 'beforeinstallprompt'
+  window.addEventListener("beforeinstallprompt", (e) => {
+    e.preventDefault();
+    deferredInstallPrompt = e;
+    installWrap.style.display = "flex";
+  });
+
+  // 4. Ocultar botón cuando se completa la instalación
+  window.addEventListener("appinstalled", () => {
+    deferredInstallPrompt = null;
+    installWrap.style.display = "none";
+  });
+
+  // 5. Detección de iPhone / iPad (Safari)
+  const isIos = /iphone|ipad|ipod/.test(window.navigator.userAgent.toLowerCase());
+
+  // Si es iOS Safari y no está en modo standalone, mostrar el botón con guía visual
+  if (isIos && !isStandalone) {
+    installWrap.style.display = "flex";
+  }
+
+  // 6. Clic en el botón de instalar
+  installBtn.addEventListener("click", async () => {
+    if (deferredInstallPrompt) {
+      // Flujo nativo de Android / Chrome
+      deferredInstallPrompt.prompt();
+      const choiceResult = await deferredInstallPrompt.userChoice;
+      if (choiceResult && choiceResult.outcome === "accepted") {
+        installWrap.style.display = "none";
+      }
+      deferredInstallPrompt = null;
+    } else if (isIos) {
+      // Flujo con instrucciones accesibles para iOS Safari
+      openIosModal();
+    }
+  });
+
+  setupIosModal();
+}
+
+/**
+ * Control del modal accesible para instalación en iOS
+ */
+function setupIosModal() {
+  const overlay = document.getElementById("iosModalOverlay");
+  const closeBtn = document.getElementById("closeIosModal");
+  const understoodBtn = document.getElementById("understoodIosBtn");
+
+  if (!overlay) return;
+
+  function closeIosModal() {
+    overlay.style.display = "none";
+    overlay.setAttribute("aria-hidden", "true");
+  }
+
+  if (closeBtn) closeBtn.addEventListener("click", closeIosModal);
+  if (understoodBtn) understoodBtn.addEventListener("click", closeIosModal);
+
+  // Cerrar al hacer clic en el fondo oscuro
+  overlay.addEventListener("click", (e) => {
+    if (e.target === overlay) closeIosModal();
+  });
+
+  // Cerrar con la tecla Escape
+  window.addEventListener("keydown", (e) => {
+    if (e.key === "Escape" && overlay.style.display === "flex") {
+      closeIosModal();
+    }
+  });
+}
+
+function openIosModal() {
+  const overlay = document.getElementById("iosModalOverlay");
+  if (!overlay) return;
+  overlay.style.display = "flex";
+  overlay.setAttribute("aria-hidden", "false");
+  const closeBtn = document.getElementById("closeIosModal");
+  if (closeBtn) closeBtn.focus();
 }

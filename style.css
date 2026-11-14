@@ -31,6 +31,11 @@
 *, *::before, *::after { box-sizing: border-box; }
 html { scroll-behavior: smooth; }
 
+/* Anti-parpadeo para Splash Screen si ya fue visto en la sesión */
+.no-splash #splashScreen {
+  display: none !important;
+}
+
 body {
   margin: 0;
   background: var(--bg);
@@ -1167,4 +1172,262 @@ footer {
   font-size: 11.5px;
   color: var(--tan-soft);
   opacity: 0.85;
+}
+
+/* ==========================================================================
+   PANTALLA DE BIENVENIDA (SPLASH SCREEN)
+   ========================================================================== */
+.splash-screen {
+  position: fixed;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  background: var(--bg);
+  z-index: 99999;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  animation: splashFadeOut 1.4s cubic-bezier(0.25, 1, 0.5, 1) forwards;
+}
+
+.splash-content {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+}
+
+.splash-logo {
+  display: block;
+  width: 180px;
+  height: 180px;
+  border-radius: 50%;
+  box-shadow: 0 12px 36px rgba(0, 0, 0, 0.6);
+  animation: splashPopIn 1.3s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+/* Animaciones del Splash Screen */
+@keyframes splashPopIn {
+  0% {
+    opacity: 0;
+    transform: scale(0.92);
+  }
+  30% {
+    opacity: 1;
+    transform: scale(1);
+  }
+  75% {
+    opacity: 1;
+    transform: scale(1);
+  }
+  100% {
+    opacity: 0;
+    transform: scale(1.02);
+  }
+}
+
+@keyframes splashFadeOut {
+  0%, 75% {
+    opacity: 1;
+    visibility: visible;
+  }
+  100% {
+    opacity: 0;
+    visibility: hidden;
+    pointer-events: none;
+    display: none;
+  }
+}
+
+/* Cierre rápido si el usuario toca la pantalla */
+.splash-screen.splash-dismissed {
+  opacity: 0 !important;
+  visibility: hidden !important;
+  pointer-events: none !important;
+  transition: opacity .22s ease, visibility .22s ease !important;
+}
+
+/* Accesibilidad: Reducción de movimiento */
+@media (prefers-reduced-motion: reduce) {
+  .splash-screen {
+    animation-duration: 0.25s !important;
+  }
+  .splash-logo {
+    animation: none !important;
+    opacity: 1 !important;
+  }
+}
+
+/* ==========================================================================
+   BOTÓN INSTALAR APP (PWA) Y MODAL IOS
+   ========================================================================== */
+.install-app-wrap {
+  display: flex;
+  justify-content: center;
+  margin: 0 auto 18px;
+}
+
+.install-app-btn {
+  min-height: 44px;
+  padding: 10px 24px;
+  background: var(--surface);
+  color: var(--tan);
+  border: 1px solid var(--line-light);
+  border-radius: 999px;
+  font-family: inherit;
+  font-size: 13.5px;
+  font-weight: 700;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.3);
+  transition: all .2s ease;
+}
+
+.install-app-btn svg {
+  color: var(--coral-text);
+  flex-shrink: 0;
+}
+
+.install-app-btn:hover {
+  background: var(--surface-2);
+  border-color: var(--coral);
+  color: #fff;
+  transform: translateY(-2px);
+  box-shadow: 0 6px 18px rgba(226, 96, 74, 0.25);
+}
+
+.install-app-btn:active {
+  transform: translateY(0);
+}
+
+/* Modal de instrucciones para iPhone / iPad */
+.ios-modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.72);
+  backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
+  z-index: 100;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 16px;
+  animation: fadeIn .2s ease;
+}
+
+.ios-modal {
+  background: var(--surface);
+  border: 1px solid var(--line-light);
+  border-radius: 20px;
+  width: 100%;
+  max-width: 400px;
+  box-shadow: 0 16px 40px rgba(0, 0, 0, 0.65);
+  overflow: hidden;
+  animation: iosPop .25s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+@keyframes iosPop {
+  from { opacity: 0; transform: scale(0.94); }
+  to { opacity: 1; transform: scale(1); }
+}
+
+.ios-modal-header {
+  padding: 16px 20px 14px;
+  border-bottom: 1px solid var(--line-dark);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.ios-modal-header h3 {
+  margin: 0;
+  font-size: 17px;
+  color: var(--tan);
+  font-family: inherit;
+  font-weight: 700;
+}
+
+.ios-modal-close {
+  min-width: 44px;
+  min-height: 44px;
+  background: none;
+  border: none;
+  font-size: 26px;
+  color: var(--tan-soft);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  transition: background .15s ease, color .15s ease;
+}
+
+.ios-modal-close:hover {
+  background: var(--surface-2);
+  color: #fff;
+}
+
+.ios-modal-body {
+  padding: 18px 20px;
+  font-size: 13.5px;
+  color: var(--tan-soft);
+  line-height: 1.6;
+}
+
+.ios-modal-body p {
+  margin: 0 0 12px;
+}
+
+.ios-steps {
+  margin: 0;
+  padding-left: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.ios-steps li {
+  line-height: 1.45;
+}
+
+.ios-badge-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 22px;
+  height: 22px;
+  background: var(--surface-2);
+  border: 1px solid var(--line-dark);
+  border-radius: 5px;
+  vertical-align: middle;
+  margin: 0 3px;
+  color: var(--coral-text);
+}
+
+.ios-modal-footer {
+  padding: 12px 20px 18px;
+  display: flex;
+  justify-content: flex-end;
+  border-top: 1px solid var(--line-dark);
+}
+
+.ios-modal-btn {
+  min-height: 44px;
+  padding: 10px 24px;
+  background: var(--coral);
+  color: #fff;
+  border: none;
+  border-radius: 999px;
+  font-family: inherit;
+  font-size: 13.5px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: background .15s ease;
+}
+
+.ios-modal-btn:hover {
+  background: var(--coral-dark);
 }
