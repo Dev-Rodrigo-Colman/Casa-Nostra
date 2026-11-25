@@ -65,11 +65,31 @@ const BEBIDAS = [
 ];
 
 const CATEGORIES = [
-  { id: "pizzas", label: "Pizzas" },
-  { id: "corrida", label: "Pizza Corrida" },
-  { id: "calzones", label: "Calzones" },
-  { id: "papas", label: "Papas fritas" },
-  { id: "bebidas", label: "Bebidas" }
+  {
+    id: "pizzas",
+    label: "Pizzas",
+    icon: `<svg class="cat-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 2C6.5 2 2 4.5 2 7l10 15L22 7c0-2.5-4.5-5-10-5z"/><circle cx="9" cy="8" r="1" fill="currentColor"/><circle cx="15" cy="8" r="1" fill="currentColor"/><circle cx="12" cy="13" r="1" fill="currentColor"/></svg>`
+  },
+  {
+    id: "corrida",
+    label: "Pizza Corrida",
+    icon: `<svg class="cat-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18.178 8c5.096 0 5.096 8 0 8-3.058 0-4.832-4-6.178-4-1.346 0-3.12 4-6.178 4-5.096 0-5.096-8 0-8 3.058 0 4.832 4 6.178 4 1.346 0 3.12-4 6.178-4z"/></svg>`
+  },
+  {
+    id: "calzones",
+    label: "Calzones",
+    icon: `<svg class="cat-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 14c0-5 4-9 9-9s9 4 9 9c0 2-2 4-4 4H7c-2 0-4-2-4-4z"/><path d="M4 14c2-1 4-1 6 0s4 1 6 0 4-1 4 0"/></svg>`
+  },
+  {
+    id: "papas",
+    label: "Papas fritas",
+    icon: `<svg class="cat-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 10V4m4 6V2m4 8V3m4 7V5"/><path d="M5 10h14l-1.5 11h-11L5 10z"/></svg>`
+  },
+  {
+    id: "bebidas",
+    label: "Bebidas",
+    icon: `<svg class="cat-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M7 6h10l-1.2 14H8.2L7 6z"/><path d="M6 6h12"/><path d="M14 2l-2 4"/></svg>`
+  }
 ];
 
 /* ==========================================================================
@@ -219,12 +239,25 @@ function addToCart(line) {
 }
 
 function renderCartBadge() {
-  const badge = document.getElementById("cartBadge");
-  const fab = document.getElementById("cartFab");
-  const count = cartCount();
-  if (badge) badge.textContent = count;
-  if (fab) {
-    fab.setAttribute("aria-label", `Abrir carrito de compras: ${count} ${count === 1 ? 'ítem' : 'ítems'}`);
+  try {
+    const badge = document.getElementById("cartBadge");
+    const fab = document.getElementById("cartFab");
+    const count = cartCount();
+    const total = cartTotal();
+    const fabText = fab ? fab.querySelector(".fab-text") : null;
+
+    if (badge) badge.textContent = count;
+    if (fabText) {
+      fabText.textContent = count > 0 ? `Ver pedido · ${money(total)}` : "Ver pedido";
+    }
+    if (fab) {
+      const label = count > 0
+        ? `Abrir carrito de compras: ${count} ${count === 1 ? 'ítem' : 'ítems'} · Total ${money(total)}`
+        : "Abrir carrito de compras: 0 ítems";
+      fab.setAttribute("aria-label", label);
+    }
+  } catch (err) {
+    console.warn("Error en renderCartBadge:", err);
   }
 }
 
@@ -251,7 +284,7 @@ function getPlaceholderSVG() {
 function pizzaCardHTML(p) {
   const eff = effectivePizzaPrice(p);
   const priceHTML = eff.original
-    ? `<span class="price-strike">${money(eff.original)}</span>${money(eff.price)}<span class="promo-tag">Oferta</span>`
+    ? `<span class="price-strike">${money(eff.original)}</span>${money(eff.price)}<span class="promo-tag">Promo</span>`
     : `${money(eff.price)}`;
 
   const badgeHTML = p.badge
@@ -262,8 +295,10 @@ function pizzaCardHTML(p) {
     ? `<div class="item-media-wrap">${badgeHTML}<img class="item-img" src="${p.img}" alt="Pizza ${p.name} de Casa Nostra" loading="lazy" decoding="async"></div>`
     : `<div class="item-media-wrap">${badgeHTML}${getPlaceholderSVG()}</div>`;
 
+  const sinFotoClass = !p.img ? " sin-foto" : "";
+
   return `
-  <article class="item-card" data-search="${p.name.toLowerCase()} ${p.desc.toLowerCase()} pizza">
+  <article class="item-card${sinFotoClass}" data-search="${p.name.toLowerCase()} ${p.desc.toLowerCase()} pizza">
     ${mediaHTML}
     <div class="item-top">
       <h3 class="item-name">${p.name}</h3>
@@ -405,28 +440,34 @@ function bebidaCardHTML() {
 let navScrollLock = false; // evita parpadeo del scroll-spy durante el scroll suave
 
 function renderNav() {
-  const nav = document.getElementById("catNav");
-  if (!nav) return;
+  try {
+    const nav = document.getElementById("catNav");
+    if (!nav) return;
 
-  nav.innerHTML = CATEGORIES.map((c, i) =>
-    `<button type="button" data-cat="${c.id}" class="${i === 0 ? 'active' : ''}" role="tab" aria-selected="${i === 0}">
-      ${c.label}
-    </button>`
-  ).join('');
+    nav.innerHTML = CATEGORIES.map((c, i) =>
+      `<button type="button" data-cat="${c.id}" class="${i === 0 ? 'active' : ''}" role="tab" aria-selected="${i === 0}">
+        ${c.icon || ''}<span>${c.label}</span>
+      </button>`
+    ).join('');
 
-  nav.querySelectorAll("button").forEach(btn => {
-    btn.addEventListener("click", () => {
-      const targetId = `cat-${btn.dataset.cat}`;
-      const targetSection = document.getElementById(targetId);
-      if (targetSection) {
-        // Scroll suave con offset
-        navScrollLock = true;
-        setActiveCategory(btn.dataset.cat);
-        targetSection.scrollIntoView({ behavior: "smooth", block: "start" });
-        setTimeout(() => { navScrollLock = false; }, 900);
-      }
+    nav.querySelectorAll("button").forEach(btn => {
+      btn.addEventListener("click", () => {
+        const targetId = `cat-${btn.dataset.cat}`;
+        const targetSection = document.getElementById(targetId);
+        if (targetSection) {
+          // Scroll suave con offset
+          navScrollLock = true;
+          setActiveCategory(btn.dataset.cat);
+          targetSection.scrollIntoView({ behavior: "smooth", block: "start" });
+          setTimeout(() => { navScrollLock = false; }, 900);
+        }
+      });
     });
-  });
+
+    initCatsScrollPointers();
+  } catch (err) {
+    console.warn("Error en renderNav:", err);
+  }
 }
 
 function setActiveCategory(catId) {
@@ -649,16 +690,28 @@ function wireCardEvents() {
 
         addToCart(line);
 
-        // Micro-animación visual y feedback
-        addBtn.classList.add("added");
-        const span = addBtn.querySelector("span");
-        const prevText = span ? span.textContent : "Agregar";
-        if (span) span.textContent = "¡Agregado! ✓";
+        // Feedback al agregar: cambio de texto durante ~1s y rebote en carrito
+        try {
+          if (addBtn._feedbackTimer) {
+            clearTimeout(addBtn._feedbackTimer);
+          }
+          const span = addBtn.querySelector("span");
+          if (!addBtn.dataset.originalText) {
+            addBtn.dataset.originalText = span ? span.textContent : "Agregar";
+          }
+          addBtn.classList.add("added");
+          if (span) span.textContent = "✓ Agregado";
 
-        setTimeout(() => {
-          addBtn.classList.remove("added");
-          if (span) span.textContent = prevText === "¡Agregado! ✓" ? "Agregar" : prevText;
-        }, 850);
+          triggerCartBounce();
+
+          addBtn._feedbackTimer = setTimeout(() => {
+            addBtn.classList.remove("added");
+            if (span) span.textContent = addBtn.dataset.originalText || "Agregar";
+            delete addBtn._feedbackTimer;
+          }, 1000);
+        } catch (e) {
+          console.warn("Error en animación de agregado:", e);
+        }
 
         // Reset stepper
         qty = 1;
@@ -1327,4 +1380,54 @@ function openIosModal() {
   overlay.setAttribute("aria-hidden", "false");
   const closeBtn = document.getElementById("closeIosModal");
   if (closeBtn) closeBtn.focus();
+}
+
+/* ==========================================================================
+   16. MEJORAS VISUALES Y EXPERIENCIA DE USUARIO (UX/UI)
+   ========================================================================== */
+function triggerCartBounce() {
+  try {
+    const fab = document.getElementById("cartFab");
+    const badge = document.getElementById("cartBadge");
+    if (fab) {
+      fab.classList.remove("cart-bounce");
+      void fab.offsetWidth; // Forzar reflow para reiniciar la animación
+      fab.classList.add("cart-bounce");
+    }
+    if (badge) {
+      badge.classList.remove("badge-pop");
+      void badge.offsetWidth;
+      badge.classList.add("badge-pop");
+    }
+  } catch (err) {
+    console.warn("Error al animar carrito:", err);
+  }
+}
+
+function updateCatsScrollPointers() {
+  try {
+    const nav = document.getElementById("catNav");
+    const wrap = document.getElementById("catsWrap") || (nav ? nav.parentElement : null);
+    if (!nav || !wrap) return;
+    const sl = nav.scrollLeft;
+    const maxScroll = nav.scrollWidth - nav.clientWidth;
+    wrap.classList.toggle("has-scroll-left", sl > 6);
+    wrap.classList.toggle("has-scroll-right", sl < maxScroll - 6);
+  } catch (err) {
+    console.warn("Error en updateCatsScrollPointers:", err);
+  }
+}
+
+let catsPointersInitialized = false;
+function initCatsScrollPointers() {
+  try {
+    const nav = document.getElementById("catNav");
+    if (!nav || catsPointersInitialized) return;
+    catsPointersInitialized = true;
+    updateCatsScrollPointers();
+    nav.addEventListener("scroll", updateCatsScrollPointers, { passive: true });
+    window.addEventListener("resize", updateCatsScrollPointers);
+  } catch (err) {
+    console.warn("Error en initCatsScrollPointers:", err);
+  }
 }
