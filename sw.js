@@ -3,7 +3,7 @@
  * Estrategia híbrida: Network-First para datos/código y Stale-While-Revalidate para imágenes.
  */
 
-const CACHE_NAME = 'casa-nostra-v2';
+const CACHE_NAME = 'casa-nostra-v3';
 
 // Recursos esenciales para funcionamiento offline
 const PRECACHE_ASSETS = [

@@ -1147,7 +1147,7 @@ function buildWhatsAppMessage() {
   if (orderType === "delivery") {
     msg += `📍 *DATOS DE ENTREGA:*\n`;
     if (address) msg += `• *Dirección:* ${address}\n`;
-    if (sharedLocationLink) msg += `• *Ubicación GPS:* ${sharedLocationLink}\n`;
+    if (sharedLocationLink) msg += `• *Ubicación GPS:* se envía en un mensaje aparte 📍\n`;
   } else if (orderType === "autopizza") {
     msg += `🚗 *DATOS DE AUTO-PIZZA:*\n`;
     if (vehicle) msg += `• *Vehículo:* ${vehicle}\n`;
@@ -1183,15 +1183,53 @@ if (waBtn) {
     const message = buildWhatsAppMessage();
     const waUrl = `https://wa.me/${WHATSAPP_NUMBER}?text=${encodeURIComponent(message)}`;
 
+    // Guardar datos del paso 2 (ubicación aparte) antes de limpiar
+    const needsLocationStep = orderType === "delivery" && !!sharedLocationLink;
+    const locationToSend = sharedLocationLink;
+
     // 3. Limpiar carrito y persistencia
     clearCart();
 
     // 4. Cerrar drawer
     closeDrawer();
 
-    // 5. Abrir WhatsApp
+    // 5. Abrir WhatsApp con el pedido
     window.open(waUrl, "_blank");
+
+    // 6. Si es delivery con GPS, ofrecer el segundo mensaje solo con la ubicación
+    if (needsLocationStep) showLocationStep(locationToSend);
   });
+}
+
+/**
+ * Paso 2 (solo delivery con GPS): segundo mensaje con ÚNICAMENTE el link de
+ * Google Maps, para que el local pueda reenviarlo tal cual al repartidor.
+ * Se abre con un clic del usuario porque los navegadores bloquean que una
+ * misma acción abra dos ventanas.
+ */
+function showLocationStep(locationLink) {
+  const modal = document.getElementById("locationStepModal");
+  const sendBtn = document.getElementById("locationStepSend");
+  const skipBtn = document.getElementById("locationStepClose");
+  if (!modal || !sendBtn || !skipBtn) return;
+
+  const close = () => {
+    modal.classList.remove("show");
+    modal.setAttribute("aria-hidden", "true");
+  };
+
+  // Mensaje de ubicación: solo el link, así se reenvía limpio al delivery
+  const locUrl = `https://wa.me/${WHATSAPP_NUMBER}?text=${encodeURIComponent(locationLink)}`;
+
+  sendBtn.onclick = () => {
+    window.open(locUrl, "_blank");
+    close();
+  };
+  skipBtn.onclick = close;
+
+  modal.classList.add("show");
+  modal.setAttribute("aria-hidden", "false");
+  sendBtn.focus();
 }
 
 /* ==========================================================================

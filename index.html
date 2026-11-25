@@ -299,5 +299,15 @@
 </footer>
 
 <script src="script.js"></script>
+
+<!-- Paso 2 del pedido: ubicación en mensaje aparte (para reenviar al delivery) -->
+<div class="location-step" id="locationStepModal" role="dialog" aria-modal="true" aria-labelledby="locationStepTitle" aria-hidden="true">
+  <div class="location-step-card">
+    <h3 id="locationStepTitle">📍 Un paso más</h3>
+    <p>Tu pedido ya se envió. Ahora mandá tu <strong>ubicación en un mensaje aparte</strong> para que el local se la reenvíe directo al delivery.</p>
+    <button type="button" class="wa-btn" id="locationStepSend">📍 Enviar mi ubicación</button>
+    <button type="button" class="location-step-skip" id="locationStepClose">Ahora no</button>
+  </div>
+</div>
 </body>
 </html>
